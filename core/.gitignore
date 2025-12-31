@@ -1,0 +1,35 @@
+# Python / venv
+venv/
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+*.log
+
+# Secrets
+.env
+
+# OS / Editor
+.DS_Store
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env
+
+# Django
+db.sqlite3
+media/
+
+# OS
+.DS_Store
+Thumbs.db

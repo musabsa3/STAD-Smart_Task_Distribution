@@ -1,0 +1,685 @@
+{% extends "base.html" %}
+
+{% block title %}تسليمات المهام - STAD{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Cairo', sans-serif;
+        background: #0a0e27;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .stars-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+    }
+
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle 3s infinite;
+    }
+
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .top-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 70px;
+        background: rgba(10, 14, 39, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(124, 92, 219, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
+        z-index: 1000;
+    }
+
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    .btn-back {
+        background: rgba(102, 126, 234, 0.2);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-back:hover {
+        background: rgba(102, 126, 234, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .main-content {
+        margin-top: 70px;
+        padding: 40px;
+        position: relative;
+        z-index: 1;
+        min-height: calc(100vh - 70px);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 25px;
+        padding: 40px;
+        color: white;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 800;
+    }
+
+    .page-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(124, 92, 219, 0.3);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+
+    .submissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 25px;
+    }
+
+    .submission-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .submission-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), transparent);
+        border-radius: 0 20px 0 100%;
+    }
+
+    .submission-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(124, 92, 219, 0.3);
+        border-color: rgba(124, 92, 219, 0.5);
+    }
+
+    .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .employee-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .employee-details h4 {
+        color: white;
+        font-size: 1.1rem;
+        margin-bottom: 3px;
+    }
+
+    .employee-details span {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+    }
+
+    .status-badge {
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-under_review {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+    }
+
+    .status-approved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+    }
+
+    .status-rejected {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    .task-info {
+        margin-bottom: 15px;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+    }
+
+    .info-icon {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+
+    .info-row strong {
+        color: white;
+    }
+
+    .notes-section {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+    }
+
+    .notes-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .notes-text {
+        color: white;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 15px;
+        background: rgba(102, 126, 234, 0.2);
+        color: #60a5fa;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin: 10px 0;
+    }
+
+    .attachment-link:hover {
+        background: rgba(102, 126, 234, 0.3);
+        transform: translateX(-5px);
+    }
+
+    .rating-section {
+        margin: 20px 0;
+    }
+
+    .rating-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .stars-rating {
+        display: flex;
+        gap: 5px;
+    }
+
+    .star-rating {
+        font-size: 1.8rem;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.2);
+        transition: all 0.2s ease;
+    }
+
+    .star-rating:hover,
+    .star-rating.active {
+        color: #fbbf24;
+        transform: scale(1.1);
+    }
+
+    .comment-section {
+        margin: 15px 0;
+    }
+
+    .comment-textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: white;
+        font-family: 'Cairo', sans-serif;
+        font-size: 0.9rem;
+        resize: vertical;
+    }
+
+    .comment-textarea::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .comment-textarea:focus {
+        outline: none;
+        border-color: rgba(102, 126, 234, 0.5);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .actions-section {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-family: 'Cairo', sans-serif;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-approve {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+    }
+
+    .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.4);
+    }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .empty-state-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        font-size: 1.2rem;
+    }
+
+    @media (max-width: 768px) {
+        .submissions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .page-header {
+            padding: 30px 20px;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="stars-background" id="starsBackground"></div>
+
+    <nav class="top-navbar">
+        <a href="{% url 'dashboard' %}" class="navbar-brand">
+            <span>STAD</span>
+        </a>
+        <div class="navbar-actions">
+            <a href="{% url 'dashboard' %}" class="btn-back">
+                <span>←</span>
+                <span>العودة للوحة التحكم</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="page-header-content">
+                <h1>📤 تسليمات المهام</h1>
+                <p>مراجعة وتقييم المهام المُسلّمة من الموظفين</p>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-number">{{ total_submissions }}</div>
+                <div class="stat-label">إجمالي التسليمات</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ pending_submissions }}</div>
+                <div class="stat-label">قيد المراجعة</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ approved_submissions }}</div>
+                <div class="stat-label">موافق عليها</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">{{ rejected_submissions }}</div>
+                <div class="stat-label">مرفوضة</div>
+            </div>
+        </div>
+
+        {% if submissions %}
+        <div class="submissions-grid">
+            {% for sub in submissions %}
+            <div class="submission-card">
+                <div class="submission-header">
+                    <div class="employee-info">
+                        <div class="employee-avatar">👨‍💻</div>
+                        <div class="employee-details">
+                            <h4>{{ sub.employee.first_name|default:sub.employee.username }}</h4>
+                            <span>{{ sub.submitted_at|date:"Y-m-d h:i A" }}</span>
+                        </div>
+                    </div>
+                    <span class="status-badge status-{{ sub.status }}">
+                        {% if sub.status == 'under_review' %}
+                            قيد المراجعة
+                        {% elif sub.status == 'approved' %}
+                            موافق عليها ✓
+                        {% else %}
+                            مرفوضة ✗
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="task-info">
+                    <div class="info-row">
+                        <span class="info-icon">📝</span>
+                        <strong>المهمة:</strong> {{ sub.task.title }}
+                    </div>
+                    <div class="info-row">
+                        <span class="info-icon">📁</span>
+                        <strong>المشروع:</strong> 
+                        {% if sub.task.project %}
+                            {{ sub.task.project.name }}
+                        {% else %}
+                            <span style="color: #fbbf24;">⭐ مهمة مستقلة</span>
+                        {% endif %}
+                    </div>
+                    <div class="info-row">
+                        <span class="info-icon">📅</span>
+                        <strong>تاريخ التسليم:</strong> {{ sub.submitted_at|date:"Y-m-d" }}
+                    </div>
+                </div>
+
+                {% if sub.notes %}
+                <div class="notes-section">
+                    <span class="notes-label">💬 ملاحظات الموظف:</span>
+                    <p class="notes-text">{{ sub.notes }}</p>
+                </div>
+                {% endif %}
+
+                {% if sub.attachment %}
+                <a href="{{ sub.attachment.url }}" target="_blank" class="attachment-link">
+                    <span>📎</span>
+                    <span>عرض المرفق</span>
+                </a>
+                {% endif %}
+
+                {% if sub.status == 'under_review' %}
+                <div class="rating-section">
+                    <label class="rating-label">⭐ التقييم:</label>
+                    <div class="stars-rating" id="rating-{{ sub.id }}">
+                        {% for i in "12345" %}
+                            <span class="star-rating" data-rating="{{ forloop.counter }}" onclick="setRating({{ sub.id }}, {{ forloop.counter }})">★</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="comment-section">
+                    <label class="rating-label">📝 ملاحظاتك (اختياري):</label>
+                    <textarea 
+                        class="comment-textarea" 
+                        id="comment-{{ sub.id }}"
+                        placeholder="أضف ملاحظاتك هنا..."></textarea>
+                </div>
+
+                <div class="actions-section">
+                    <form method="post" action="{% url 'approve_submission' sub.id %}" style="flex: 1;" onsubmit="return submitApproval({{ sub.id }})">
+                        {% csrf_token %}
+                        <input type="hidden" name="rating" id="rating-value-{{ sub.id }}" value="5">
+                        <input type="hidden" name="comment" id="comment-value-{{ sub.id }}">
+                        <button type="submit" class="btn-action btn-approve">
+                            <span>✓</span>
+                            <span>موافقة</span>
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'reject_submission' sub.id %}" style="flex: 1;" onsubmit="return submitRejection({{ sub.id }})">
+                        {% csrf_token %}
+                        <input type="hidden" name="comment" id="comment-reject-{{ sub.id }}">
+                        <button type="submit" class="btn-action btn-reject">
+                            <span>✗</span>
+                            <span>رفض</span>
+                        </button>
+                    </form>
+                </div>
+
+                {% else %}
+                <div class="rating-section">
+                    <label class="rating-label">⭐ التقييم:</label>
+                    <div class="stars-rating">
+                        {% with rating=sub.get_rating %}
+                            {% if rating %}
+                                {% for i in "12345" %}
+                                    <span class="star-rating {% if forloop.counter <= rating %}active{% endif %}">★</span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">لم يتم التقييم</span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                {% with comment=sub.get_rating_comment %}
+                    {% if comment %}
+                    <div class="notes-section">
+                        <span class="notes-label">📝 ملاحظات المدير:</span>
+                        <p class="notes-text">{{ comment }}</p>
+                    </div>
+                    {% endif %}
+                {% endwith %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>لا توجد تسليمات حتى الآن</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <script>
+        // إنشاء النجوم
+        function createStars() {
+            const container = document.getElementById('starsBackground');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        }
+        window.addEventListener('load', createStars);
+
+        // تعيين التقييم
+        function setRating(submissionId, rating) {
+            const starsContainer = document.getElementById('rating-' + submissionId);
+            const stars = starsContainer.querySelectorAll('.star-rating');
+            const ratingInput = document.getElementById('rating-value-' + submissionId);
+            
+            ratingInput.value = rating;
+            
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // نسخ الملاحظات عند الموافقة
+        function submitApproval(submissionId) {
+            const comment = document.getElementById('comment-' + submissionId).value;
+            document.getElementById('comment-value-' + submissionId).value = comment;
+            return true;
+        }
+
+        // نسخ الملاحظات عند الرفض
+        function submitRejection(submissionId) {
+            const comment = document.getElementById('comment-' + submissionId).value;
+            document.getElementById('comment-reject-' + submissionId).value = comment;
+            return true;
+        }
+    </script>
+{% endblock %}

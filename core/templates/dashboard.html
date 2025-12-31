@@ -1,0 +1,4060 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if role == "manager" %}
+        لوحة تحكم المدير - STAD
+    {% else %}
+        لوحة تحكم الموظف - STAD
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Cairo', sans-serif;
+        background: #0a0e27;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* خلفية متحركة بالنجوم */
+    .stars-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+    }
+
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle 3s infinite;
+    }
+
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* الشريط العلوي */
+    .top-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 70px;
+        background: rgba(10, 14, 39, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(124, 92, 219, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
+        z-index: 1000;
+    }
+
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .navbar-brand img {
+        height: 50px;
+    }
+
+    .navbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: white;
+    }
+
+    .user-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .user-details h4 {
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+
+    .user-details span {
+        font-size: 0.85rem;
+        color: #a78bfa;
+    }
+
+    .btn-logout {
+        background: rgba(239, 68, 68, 0.2);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-logout:hover {
+        background: rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* القائمة الجانبية */
+    .sidebar {
+        position: fixed;
+        right: 0;
+        top: 70px;
+        width: 260px;
+        height: calc(100vh - 70px);
+        background: rgba(10, 14, 39, 0.95);
+        backdrop-filter: blur(20px);
+        border-left: 1px solid rgba(124, 92, 219, 0.3);
+        padding: 30px 0;
+        z-index: 999;
+        overflow-y: auto;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+    }
+
+    .sidebar-item {
+        margin-bottom: 10px;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 30px;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-right: 3px solid transparent;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+        background: rgba(124, 92, 219, 0.1);
+        color: white;
+        border-right-color: #667eea;
+    }
+
+    .sidebar-icon {
+        font-size: 1.3rem;
+    }
+
+    /* المحتوى الرئيسي */
+    .main-content {
+        margin-right: 260px;
+        margin-top: 70px;
+        padding: 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* الترويسة */
+    .dashboard-header {
+        margin-bottom: 40px;
+    }
+
+    .welcome-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 25px;
+        padding: 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .welcome-content h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 800;
+    }
+
+    .welcome-content p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    /* بطاقات الأرقام */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 30px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+        border-radius: 0 20px 0 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(124, 92, 219, 0.3);
+        border-color: rgba(124, 92, 219, 0.5);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stat-icon.orange {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stat-icon.purple {
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    }
+
+    .stat-icon.gold {
+        background: linear-gradient(135deg, #f7b733 0%, #fc4a1a 100%);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1rem;
+    }
+
+    .stat-change {
+        font-size: 0.9rem;
+        color: #4ade80;
+        margin-top: 10px;
+    }
+
+    .stat-change.negative {
+        color: #f87171;
+    }
+
+    /* الأقسام */
+    .section {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 25px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .section-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    /* الأزرار */
+    .btn {
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-family: 'Cairo', sans-serif;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.6);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .btn-sm {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+
+    .btn-edit {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+    }
+
+    /* الفلاتر */
+    .filters {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 10px 15px;
+        color: white;
+        font-family: 'Cairo', sans-serif;
+        min-width: 200px;
+    }
+
+    .filter-select option {
+        background: #1a1f3a;
+    }
+
+    /* الجداول */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+
+    .data-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 15px 20px;
+        text-align: right;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+    }
+
+    .data-table thead th:first-child {
+        border-radius: 12px 0 0 12px;
+    }
+
+    .data-table thead th:last-child {
+        border-radius: 0 12px 12px 0;
+    }
+
+    .data-table tbody tr {
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.3s ease;
+    }
+
+    .data-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: scale(1.01);
+    }
+
+    .data-table tbody td {
+        padding: 20px;
+        color: white;
+        border: none;
+    }
+
+    .data-table tbody tr td:first-child {
+        border-radius: 12px 0 0 12px;
+    }
+
+    .data-table tbody tr td:last-child {
+        border-radius: 0 12px 12px 0;
+    }
+
+    .project-name {
+        font-weight: 700;
+        color: #60a5fa;
+        font-size: 1.05rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-todo {
+        background: rgba(156, 163, 175, 0.2);
+        color: #d1d5db;
+    }
+
+    .status-in_progress {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+    }
+
+    .status-completed {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+    }
+
+    .status-blocked {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    .status-late {
+        background: rgba(248, 113, 113, 0.25);
+        color: #fecaca;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+
+    /* الحالة الجديدة: تحت المراجعة */
+    .status-under_review {
+        background: rgba(234, 179, 8, 0.23);  /* أصفر خفيف */
+        color: #fde68a;                       /* نص أصفر فاتح */
+        box-shadow: 0 0 3px rgba(234, 179, 8, 0.4);
+    }
+
+
+
+    /* نسبة الإنجاز */
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4ade80, #22c55e);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 5px;
+    }
+
+    /* Gantt Chart */
+    .gantt-container {
+        overflow-x: auto;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+    }
+
+    .gantt-chart {
+        min-width: 800px;
+    }
+
+    .gantt-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 20px;
+    }
+
+    .gantt-task-name {
+        width: 200px;
+        color: white;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .gantt-timeline {
+        flex: 1;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gantt-bar {
+        position: absolute;
+        height: 100%;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .gantt-bar:hover {
+        filter: brightness(1.2);
+        transform: scaleY(1.1);
+    }
+
+    .gantt-bar.status-todo {
+        background: linear-gradient(90deg, #9ca3af, #6b7280);
+    }
+
+    .gantt-bar.status-in_progress {
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+    }
+
+    .gantt-bar.status-completed {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+
+    .gantt-bar.status-blocked {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    /* نموذج تسليم المهمة */
+    .submit-form {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 12px 15px;
+        color: white;
+        font-family: 'Cairo', sans-serif;
+        transition: all 0.3s ease;
+    }
+
+    /* تصحيح ألوان القائمة المنسدلة في "اختَر المهمة" */
+    select.form-input option {
+        color: #000;      /* نص أسود عشان يبان على الخلفية البيضاء */
+        background: #fff; /* خلي الخلفية بيضاء زي ما تحب */
+}
+
+
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .file-upload {
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .file-upload.drag-over {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+}
+
+    .file-name {
+        direction: ltr; /* عشان اسم الملف الإنجليزي ما ينقلب */
+}
+
+
+    .file-upload:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .file-upload-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        opacity: 0.5;
+    }
+
+    /* ضغط العمل */
+    .workload-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .workload-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .workload-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(124, 92, 219, 0.3);
+    }
+
+    .employee-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .employee-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .employee-info h4 {
+        color: white;
+        font-size: 1.1rem;
+        margin-bottom: 3px;
+    }
+
+    .employee-info span {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+    }
+
+    .workload-level {
+        margin-top: 15px;
+    }
+
+    .workload-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .workload-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .workload-fill.low {
+        background: linear-gradient(90deg, #4ade80, #22c55e);
+        width: 30%;
+    }
+
+    .workload-fill.medium {
+        background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        width: 60%;
+    }
+
+    .workload-fill.high {
+        background: linear-gradient(90deg, #f87171, #ef4444);
+        width: 90%;
+    }
+
+    /* لوحة النشاط */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        border-right: 3px solid #667eea;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .activity-content h4 {
+        color: white;
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+
+    .activity-content p {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+    }
+
+    .activity-time {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+    }
+
+    /* Tabs للمشاريع */
+    .project-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Cairo', sans-serif;
+        font-weight: 600;
+    }
+
+    .tab-btn.active,
+    .tab-btn:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+        align-items: stretch;  
+    }
+
+
+    .chart-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        backdrop-filter: blur(10px);
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        min-height: 280px;
+        height: 100%;           
+    }   
+
+
+
+    .chart-title {
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .workload-wrapper {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        margin: 0 auto;
+    }
+
+    .workload-wrapper canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .workload-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        text-align: center;
+    }
+
+    .workload-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1;
+    }
+
+    .workload-total {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .workload-text {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+    }
+
+    .chart-card canvas {
+        max-height: 260px !important;
+        max-width: 260px !important;
+        margin: 0 auto;
+        display: block;
+    }
+
+        /* Legend styling for Tasks by Status */
+    .chartjs-legend {
+        margin-top: 20px;
+    }
+
+    .chartjs-legend ul {
+        display: flex !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        gap: 18px !important;
+        padding-left: 0 !important;
+        margin: 0;
+    }
+
+    .chartjs-legend li {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        list-style: none !important;
+        font-size: 14px !important;
+        color: #ffffff;
+        opacity: 0.9;
+    }
+
+    .chartjs-legend li span {
+        width: 14px !important;
+        height: 14px !important;
+        border-radius: 50% !important;
+        display: inline-block;
+    }
+
+
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .sidebar {
+            transform: translateX(260px);
+        }
+
+        .main-content {
+            margin-right: 0;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filters {
+            flex-direction: column;
+        }
+
+        .filter-select {
+            width: 100%;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .workload-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .gantt-task-name {
+            width: 150px;
+        }
+    }
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    animation: slideDown 0.3s ease;
+    overflow: hidden;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.modal-close {
+    font-size: 2.5rem;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    transform: rotate(90deg);
+    color: #fbbf24;
+}
+
+.modal-body {
+    max-height: 70vh; /* ✅ أقصى ارتفاع 70% من الشاشة */
+    overflow-y: auto; /* ✅ تفعيل scroll عمودي */
+    padding: 35px 30px;
+}
+
+.modal-form-group {
+    margin-bottom: 25px;
+}
+
+.modal-form-group label {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+.modal-input,
+.modal-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.3s ease;
+    background: #f7fafc;
+}
+
+.modal-input:focus,
+.modal-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.modal-textarea {
+    resize: vertical;
+}
+
+.modal-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn-modal-cancel {
+    flex: 1;
+    padding: 14px 25px;
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.btn-modal-cancel:hover {
+    background: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.btn-modal-save {
+    flex: 2;
+    padding: 14px 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-modal-save:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+}
+
+.tab-content {
+    max-height: 500px;        /* نفس الارتفاع لكل التابات */
+    overflow-y: auto;         /* سكرول داخلي */
+    overflow-x: hidden;
+    padding-right: 5px;
+}
+
+/* شكل السكروول */
+.tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background: #4b6bdc;
+    border-radius: 10px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+
+    .modal-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+/* Delete Modal Specific Styles */
+.delete-modal .modal-content {
+    max-width: 550px;
+}
+
+.delete-header {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.warning-icon {
+    font-size: 5rem;
+    text-align: center;
+    margin: 20px 0;
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.warning-box {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 25px 0;
+}
+
+.warning-box p {
+    color: #991b1b;
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+.btn-modal-delete {
+    flex: 2;
+    padding: 14px 25px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+}
+
+.btn-modal-delete:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.6);
+}
+/* Task Details Modal */
+.task-details-modal .modal-content {
+    max-width: 650px;
+}
+
+.task-header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.task-detail-row {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    border-right: 4px solid transparent;
+}
+
+.task-detail-row:hover {
+    background: #edf2f7;
+    border-right-color: #4facfe;
+}
+
+.description-row {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+}
+
+.detail-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.detail-content {
+    flex: 1;
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    color: #718096;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 1.2rem;
+    color: #2d3748;
+    font-weight: 700;
+    margin: 0;
+}
+
+.detail-description {
+    font-size: 1.05rem;
+    color: #4a5568;
+    line-height: 1.8;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+    min-height: 80px;
+    white-space: pre-wrap;
+}
+
+.detail-description:empty::before {
+    content: 'لا يوجد وصف لهذه المهمة';
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* Field Help Text */
+.field-help {
+    display: block;
+    font-size: 0.85rem;
+    color: #718096;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* تحسين Select Box */
+.modal-input[type="date"],
+select.modal-input {
+    cursor: pointer;
+}
+
+select.modal-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 15px center;
+    padding-left: 40px;
+}
+
+select.modal-input option {
+    padding: 10px;
+    background: white;
+    color: #2d3748;
+}
+
+/* Task Add Header */
+.task-add-header {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+}
+
+
+
+/* ==================== Modern Task Modal ==================== */
+.modal-overlay-task {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+}
+
+.modal-overlay-task.show {
+    display: flex;
+}
+
+.modal-box-task {
+    background: white;
+    width: 100%;
+    max-width: 550px;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header-task {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-task h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.close-btn-task {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: white;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.close-btn-task:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.modal-body-task {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.field-task {
+    margin-bottom: 20px;
+}
+
+.label-task {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.required-star {
+    color: #ef4444;
+}
+
+.input-task,
+.textarea-task,
+.select-task {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: 'Cairo', sans-serif;
+    color: #111827;
+    transition: all 0.2s;
+    background: white;
+}
+
+.input-task:focus,
+.textarea-task:focus,
+.select-task:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.textarea-task {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Skills Chips */
+.skills-label-task {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.skills-box-task {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip-task {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+}
+
+.chip-task:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.chip-task.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Employee Assignment */
+.assign-row-task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.assign-row-task .select-task {
+    flex: 1;
+}
+
+.smart-btn-task {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: 'Cairo', sans-serif;
+}
+
+.smart-btn-task:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.smart-btn-task.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Smart Suggestion Card */
+.suggestion-card-task {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    display: none;
+}
+
+.suggestion-card-task.show {
+    display: block;
+}
+
+.suggestion-badge-task {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.employee-card-task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+}
+
+.avatar-task {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.emp-details-task {
+    flex: 1;
+}
+
+.emp-name-task {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 2px;
+}
+
+.emp-role-task {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.match-badge-task {
+    background: #10b981;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.reasons-box-task {
+    margin-top: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+}
+
+.reasons-box-task p {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.reasons-box-task ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reasons-box-task li {
+    font-size: 0.75rem;
+    color: #6b7280;
+    padding: 4px 0;
+    padding-right: 16px;
+    position: relative;
+}
+
+.reasons-box-task li::before {
+    content: '✓';
+    position: absolute;
+    right: 0;
+    color: #10b981;
+    font-weight: 700;
+}
+
+/* Loading */
+.loading-task {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+}
+
+.spinner-task {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Submit Button */
+.submit-btn-task {
+    width: 100%;
+    padding: 12px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Cairo', sans-serif;
+    margin-top: 24px;
+}
+
+.submit-btn-task:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Scrollbar */
+.modal-body-task::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body-task::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+
+.modal-body-task::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+@media (max-width: 640px) {
+    .assign-row-task {
+        flex-direction: column;
+    }
+    .smart-btn-task {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- خلفية النجوم -->
+    <div class="stars-background" id="starsBackground"></div>
+
+    <!-- الشريط العلوي -->
+    <nav class="top-navbar">
+        <div class="navbar-brand">
+            {% load static %}
+            <img src="{% static 'images/logo.png' %}" alt="STAD">
+            <span>STAD</span>
+        </div>
+        <div class="navbar-actions">
+            <div class="user-info">
+                <div class="user-avatar">
+                    {% if role == "manager" %}👨‍💼{% else %}👨‍💻{% endif %}
+                </div>
+                <div class="user-details">
+                    <h4>{{ request.user.first_name|default:request.user.username }}</h4>
+                    <span>{% if role == "manager" %}مدير النظام{% else %}موظف{% endif %}</span>
+                </div>
+            </div>
+            <a href="{% url 'logout' %}" class="btn-logout">
+                <span>🚪</span>
+                <span>تسجيل خروج</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- القائمة الجانبية -->
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="{% url 'dashboard' %}" class="sidebar-link active">
+                    <span class="sidebar-icon">📊</span>
+                    <span>لوحة التحكم</span>
+                </a>
+            </li>
+            {% if role == "manager" %}
+            <li class="sidebar-item">
+                <a href="#projects" class="sidebar-link">
+                    <span class="sidebar-icon">📁</span>
+                    <span>المشاريع</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#tasks" class="sidebar-link">
+                    <span class="sidebar-icon">✅</span>
+                    <span>المهام</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#employees" class="sidebar-link">
+                    <span class="sidebar-icon">👥</span>
+                    <span>الموظفين</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{% url 'submissions' %}" class="sidebar-link">
+                    <span class="sidebar-icon">📤</span>
+                    <span>التسليمات</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="sidebar-item">
+                <a href="#my-projects" class="sidebar-link">
+                    <span class="sidebar-icon">📁</span>
+                    <span>مشاريعي</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#my-tasks" class="sidebar-link">
+                    <span class="sidebar-icon">✅</span>
+                    <span>مهامي</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#timeline" class="sidebar-link">
+                    <span class="sidebar-icon">📊</span>
+                    <span>إحصائيات مهامي </span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#submit-task" class="sidebar-link">
+                    <span class="sidebar-icon">📤</span>
+                    <span>تسليم المهام</span>
+                </a>
+            </li>
+            {% endif %}
+            <li class="sidebar-item">
+                <a href="{% url 'home' %}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span>
+                    <span>الصفحة الرئيسية</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content">
+        <!-- ترويسة الترحيب -->
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <div class="welcome-content">
+                    <h1>مرحباً {{ request.user.first_name|default:request.user.username }} 👋</h1>
+                    <p>
+                        {% if role == "manager" %}
+                            إليك نظرة عامة على أداء فريقك ومشاريعك النشطة
+                        {% else %}
+                            إليك نظرة على مهامك ومشاريعك الحالية
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- بطاقات الإحصائيات -->
+            <div class="stats-grid">
+                {% if role == "manager" %}
+<div class="stat-card">
+    <div class="stat-header">
+        <div class="stat-icon blue">📝</div>
+    </div>
+    <div class="stat-number">{{ total_tasks }}</div>
+    <div class="stat-label">إجمالي المهام</div>
+    <div class="stat-change">
+        {% if total_tasks %}
+            لديك {{ total_tasks }} مهمة في النظام
+        {% else %}
+            لا توجد مهام حتى الآن
+        {% endif %}
+    </div>
+</div>
+
+<div class="stat-card">
+    <div class="stat-header">
+        <div class="stat-icon green">✅</div>
+    </div>
+    <div class="stat-number">{{ completed_tasks }}</div>
+    <div class="stat-label">المهام المكتملة</div>
+    <div class="stat-change">
+        {% if total_tasks %}
+            {{ completed_tasks }} من {{ total_tasks }} مهام مكتملة
+        {% else %}
+            لا توجد مهام لعرضها
+        {% endif %}
+    </div>
+</div>
+
+<div class="stat-card">
+    <div class="stat-header">
+        <div class="stat-icon orange">⏰</div>
+    </div>
+    <div class="stat-number">{{ overdue_tasks }}</div>
+    <div class="stat-label">المهام المتأخرة</div>
+    <div class="stat-change negative">
+        {% if overdue_tasks %}
+            تحتاج متابعة فورية
+        {% else %}
+            لا توجد مهام متأخرة 🎉
+        {% endif %}
+    </div>
+</div>
+
+<div class="stat-card">
+    <div class="stat-header">
+        <div class="stat-icon purple">📁</div>
+    </div>
+    <div class="stat-number">{{ active_projects }}</div>
+    <div class="stat-label">المشاريع النشطة</div>
+    <div class="stat-change">
+        {% if active_projects %}
+            {{ active_projects }} مشروع في النظام
+        {% else %}
+            لا توجد مشاريع بعد
+        {% endif %}
+    </div>
+</div>
+{% else %}
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon blue">✅</div>
+                    </div>
+                    <div class="stat-number">{{ total_tasks|default:0 }}</div>
+                    <div class="stat-label">مهامي</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon green">🎯</div>
+                    </div>
+                    <div class="stat-number">{{ completed_tasks|default:0 }}</div>
+                    <div class="stat-label">مهام مكتملة</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon orange">⏳</div>
+                    </div>
+                    <div class="stat-number">{{ in_progress_tasks|default:0 }}</div>
+                    <div class="stat-label">مهام قيد التنفيذ</div>
+                </div>
+
+                <div class="stat-card">
+    <div class="stat-header">
+        <div class="stat-icon purple">⏰</div>
+    </div>
+    <div class="stat-number">{{ overdue_tasks|default:0 }}</div>
+    <div class="stat-label">مهام متأخرة</div>
+</div>
+
+<!-- بطاقة التقييم -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon gold">⭐</div>
+                    </div>
+                    <div class="stat-number">
+                        {% if overall_rating > 0 %}
+                            {{ overall_rating|floatformat:1 }} / 5.0
+                        {% else %}
+                            -- / 5.0
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">تقييمي</div>
+                    <div class="stat-change">
+                        {% if rating_count > 0 %}
+                            بناءً على {{ rating_count }} تقييم
+                        {% else %}
+                            لا توجد تقييمات بعد
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% endif %}
+            </div>
+        </div>
+
+        {% if role == "manager" %}
+        <!-- واجهة المدير -->
+        
+        <!-- قسم المشاريع -->
+        <section class="section" id="projects">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-icon">📁</div>
+                    <span>المشاريع</span>
+                </div>
+                <button class="btn btn-primary" onclick="openAddProjectModal()">
+                    <span>➕</span>
+                    <span>إضافة مشروع جديد</span>
+                </button>
+            </div>
+
+            {% if projects %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>المشروع</th>
+                            <th>المدير</th>
+                            <th>عدد المهام</th>
+                            <th>نسبة الإنجاز</th>
+                            <th>تاريخ البداية</th>
+                            <th>تاريخ النهاية</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr>
+                            <td class="project-name">{{ project.name }}</td>
+                            <td>
+                                {% if project.manager %}
+                                    {{ project.manager.first_name|default:project.manager.username }}
+                                {% else %}
+                                    <span style="color: rgba(255,255,255,0.4)">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ project.tasks.count|default:0 }}</td>
+                            <td>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ project.completion }}%"></div>
+                                </div>
+                                <div class="progress-text">{{ project.completion }}%</div>
+                            </td>
+                            <td>{{ project.start_date|date:"Y-m-d"|default:"—" }}</td>
+                            <td>{{ project.end_date|date:"Y-m-d"|default:"—" }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-edit" onclick="openEditModal({{ project.id }}, '{{ project.name }}', '{{ project.description|escapejs }}', '{{ project.start_date|date:'Y-m-d'|default:'' }}', '{{ project.end_date|date:'Y-m-d'|default:'' }}')">✏️</button>
+                                <button class="btn btn-sm btn-delete" onclick="openDeleteModal({{ project.id }}, '{{ project.name|escapejs }}')"> 🗑️</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📁</div>
+                <p>لا توجد مشاريع حتى الآن</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- قسم المهام للمدير مع Tabs -->
+        <section class="section" id="tasks">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-icon">✅</div>
+                    <span>المهام</span>
+                </div>
+                <button class="btn btn-success" onclick="openTaskModal()">
+                    <span>➕</span>
+                    <span>إضافة مهمة جديدة</span>
+                </button>
+
+            </div>
+
+            <!-- Tabs للمشاريع + مهام مستقلة -->
+            <div class="project-tabs">
+                <button class="tab-btn" onclick="showTab('all-tasks')">جميع المهام</button>
+                <button class="tab-btn" onclick="showTab('standalone-tasks')">مهام مستقلة</button>
+                {% for project in projects %}
+                <button class="tab-btn" onclick="showTab('project-{{ project.id }}')">{{ project.name }}</button>
+                {% endfor %}
+            </div>
+
+<!-- الفلاتر -->
+<form method="get" class="filters">
+    <!-- فلتر الحالة -->
+    <div class="filter-group">
+        <label class="filter-label">الحالة</label>
+        <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value=""
+                {% if not selected_status_manager %}selected{% endif %}>
+                الكل
+            </option>
+            <option value="todo"
+                {% if selected_status_manager == 'todo' %}selected{% endif %}>
+                قيد الانتظار
+            </option>
+            <option value="in_progress"
+                {% if selected_status_manager == 'in_progress' %}selected{% endif %}>
+                قيد التنفيذ
+            </option>
+            <option value="under_review"
+                {% if selected_status_manager == 'under_review' %}selected{% endif %}>
+                 تحت المراجعة
+            </option>
+            <option value="completed"
+                {% if selected_status_manager == 'completed' %}selected{% endif %}>
+                مكتملة
+            </option>
+            <option value="blocked"
+                {% if selected_status_manager == 'blocked' %}selected{% endif %}>
+                معلقة
+            </option>
+                <option value="late"
+                 {% if selected_status_manager == 'late' %}selected{% endif %}>
+                 متأخرة
+            </option>
+
+        </select>
+    </div>
+
+    <!-- فلتر الموظف -->
+    <div class="filter-group">
+        <label class="filter-label">الموظف</label>
+        <select name="employee" class="filter-select" onchange="this.form.submit()">
+    <option value=""
+        {% if selected_employee == "" %}selected="selected"{% endif %}>
+        جميع الموظفين
+    </option>
+
+    {% for emp in workload_employees %}
+        <option value="{{ emp.id }}"
+            {% if selected_employee == emp.id|stringformat:"s" %}selected="selected"{% endif %}>
+            {{ emp.name }}
+        </option>
+    {% endfor %}
+</select>
+
+
+    </div>
+</form>
+
+
+            <!-- محتوى جميع المهام -->
+            <div id="all-tasks" class="tab-content active">
+                {% if tasks %}
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>المهمة</th>
+                                <th>المشروع</th>
+                                <th>الموظف</th>
+                                <th>الحالة</th>
+                                <th>تاريخ التسليم</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr>
+                                <td><strong>{{ task.title }}</strong></td>
+                                <td>
+                                    {% if task.project %}
+                                        <span class="project-name">{{ task.project.name }}</span>
+                                    {% else %}
+                                        <span style="color: #fbbf24;">⭐ مهمة مستقلة</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if task.assignee %}
+                                        {{ task.assignee.first_name|default:task.assignee.username }}
+                                    {% else %}
+                                        <span style="color: rgba(255,255,255,0.4)">غير مكلفة</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+    <span class="status-badge status-{{ task.status }}">
+        {{ task.get_status_display }}
+    </span>
+</td>
+
+
+                                <td>{{ task.due_date|date:"Y-m-d"|default:"—" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-edit" onclick="openEditTaskModal({{ task.id }}, '{{ task.title|escapejs }}', '{{ task.description|escapejs|default:'' }}', '{% if task.project %}{{ task.project.id }}{% endif %}', '{% if task.assignee %}{{ task.assignee.id }}{% endif %}', '{{ task.status }}', '{{ task.due_date|date:'Y-m-d'|default:'' }}')">✏️</button>
+                                    <button class="btn btn-sm btn-delete" onclick="openDeleteTaskModal({{ task.id }}, '{{ task.title|escapejs }}')">🗑️</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <p>لا توجد مهام حتى الآن</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- محتوى المهام المستقلة -->
+            <div id="standalone-tasks" class="tab-content">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>المهمة</th>
+                                <th>الموظف</th>
+                                <th>الحالة</th>
+                                <th>تاريخ التسليم</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                                {% if not task.project %}
+                                <tr>
+                                    <td><strong>{{ task.title }}</strong></td>
+                                    <td>
+                                        {% if task.assignee %}
+                                            {{ task.assignee.first_name|default:task.assignee.username }}
+                                        {% else %}
+                                            <span style="color: rgba(255,255,255,0.4)">غير مكلفة</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ task.status }}">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ task.due_date|date:"Y-m-d"|default:"—" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-edit">✏️</button>
+                                        <button class="btn btn-sm btn-delete">🗑️</button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">⭐</div>
+                                            <p>لا توجد مهام مستقلة</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- محتوى مهام كل مشروع -->
+            {% for project in projects %}
+            <div id="project-{{ project.id }}" class="tab-content">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>المهمة</th>
+                                <th>الموظف</th>
+                                <th>الحالة</th>
+                                <th>تاريخ التسليم</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                                {% if task.project.id == project.id %}
+                                <tr>
+                                    <td><strong>{{ task.title }}</strong></td>
+                                    <td>
+                                        {% if task.assignee %}
+                                            {{ task.assignee.first_name|default:task.assignee.username }}
+                                        {% else %}
+                                            <span style="color: rgba(255,255,255,0.4)">غير مكلفة</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ task.status }}">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ task.due_date|date:"Y-m-d"|default:"—" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-edit">✏️</button>
+                                        <button class="btn btn-sm btn-delete">🗑️</button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">✅</div>
+                                            <p>لا توجد مهام في هذا المشروع</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+
+<!-- قسم ضغط العمل -->
+<section class="section" id="employees">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon">👥</div>
+            <span>ضغط العمل - الموظفين</span>
+        </div>
+    </div>
+
+    <div class="workload-grid">
+    {% for emp in workload_employees %}
+        <div class="workload-card">
+            <div class="employee-header">
+                <div class="employee-avatar">
+                    {% if emp.level == "low" %} 🟢
+                    {% elif emp.level == "medium" %} 🟡
+                    {% else %} 🔴
+                    {% endif %}
+                </div>
+
+                <div class="employee-info">
+                    <h4>{{ emp.name  }}</h4>
+                    <span>{{ emp.role }}</span>
+                </div>
+            </div>
+
+            <div class="workload-level">
+                <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                    {{ emp.workload }} مستوى الضغط
+                </span>
+
+                <div class="workload-bar">
+                    <div class="workload-fill {{ emp.level }}"
+                            style="width: {% if emp.workload > 0 %}{{ emp.workload|floatformat:0 }}0%{% else %}0{% endif %};">
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+</section>
+
+<!-- لوحة النشاط -->
+<section class="section">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon">🔔</div>
+            <span>آخر النشاطات</span>
+        </div>
+    </div>
+
+    <div class="activity-list">
+
+        {% for log in activities %}
+        <div class="activity-item">
+            <div class="activity-icon">
+                {% if log.action_type == "task_created" %}
+                    📝
+                {% elif log.action_type == "task_updated" %}
+                    ♻️
+                {% elif log.action_type == "task_completed" %}
+                    ✅
+                {% elif log.action_type == "submission_added" %}
+                    📤
+                {% elif log.action_type == "project_created" %}
+                    📁
+                {% else %}
+                    📌
+                {% endif %}
+            </div>
+
+            <div class="activity-content">
+                <h4>{{ log.message }}</h4>
+
+                <p>
+                    بواسطة
+                    <strong>{{ log.user.username }}</strong>
+                </p>
+
+                <span class="activity-time">
+                    {{ log.timestamp|timesince }} ago
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if activities|length == 0 %}
+        <div class="activity-item">
+            <div class="activity-icon">📭</div>
+            <div class="activity-content">
+                <h4>لا توجد نشاطات حتى الآن</h4>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+
+
+<!-- ===== قسم تصدير البيانات ===== -->
+<div class="export-section" style="background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; margin-bottom: 30px;">
+    <h3 style="color: white; margin-bottom: 20px; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+        <span>📥</span>
+        <span>تصدير بيانات القسم </span>
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+        
+        <!-- تصدير الموظفين -->
+        <a href="{% url 'export_employees_excel' %}" class="export-btn">
+            <div class="export-icon">👥</div>
+            <div class="export-info">
+                <h4>تصدير الموظفين</h4>
+                <p>مهارات + تقييمات + إحصائيات</p>
+            </div>
+        </a>
+        
+        <!-- تصدير المهام -->
+        <a href="{% url 'export_tasks_excel' %}" class="export-btn">
+            <div class="export-icon">📋</div>
+            <div class="export-info">
+                <h4>تصدير المهام</h4>
+                <p>تفاصيل كاملة + حالات</p>
+            </div>
+        </a>
+        
+        <!-- تصدير التسليمات -->
+        <a href="{% url 'export_submissions_excel' %}" class="export-btn">
+            <div class="export-icon">📤</div>
+            <div class="export-info">
+                <h4>تصدير التسليمات</h4>
+                <p>تقييمات + ملاحظات</p>
+            </div>
+        </a>
+        
+    </div>
+</div>
+
+<style>
+.export-btn {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+.export-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.export-info h4 {
+    color: white;
+    font-size: 1.1rem;
+    margin: 0 0 5px 0;
+    font-weight: 700;
+}
+
+.export-info p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    margin: 0;
+}
+</style>
+
+
+{% else %}
+<!-- واجهة الموظف -->
+
+        
+        <!-- مشاريعي -->
+        <section class="section" id="my-projects">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-icon">📁</div>
+                    <span>مشاريعي</span>
+                </div>
+            </div>
+
+            {% if projects %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>المشروع</th>
+                            <th>المدير</th>
+                            <th>مهامي في المشروع</th>
+                            <th>نسبة إنجازي</th>
+                            <th>تاريخ النهاية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr>
+                            <td class="project-name">{{ project.name }}</td>
+                            <td>
+                                {% if project.manager %}
+                                    {{ project.manager.first_name|default:project.manager.username }}
+                                {% else %}
+                                    <span style="color: rgba(255,255,255,0.4)">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ project.emp_task_count }} مهام</td>
+
+                          <td>
+                          <div class="progress-bar">
+                          <div class="progress-fill" style="width: {{ project.emp_completion }}%">
+                          </div>
+                        </div>
+                        <div class="progress-text">{{ project.emp_completion }}%</div>
+                          </td>
+                            <td>{{ project.end_date|date:"Y-m-d"|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📁</div>
+                <p>لم يتم تكليفك بأي مشاريع بعد</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- مهامي -->
+<section class="section" id="my-tasks">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon">✅</div>
+            <span>مهامي</span>
+        </div>
+    </div>
+
+    <!-- فلاتر الحالة + المشروع -->
+    <form method="get" class="filters">
+    <!-- فلتر الحالة -->
+    <div class="filter-group">
+        <label class="filter-label">الحالة</label>
+        <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value="" {% if not selected_status %}selected{% endif %}>الكل</option>
+            <option value="todo" {% if selected_status == 'todo' %}selected{% endif %}>To Do</option>
+            <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="under_review" {% if selected_status == 'under_review' %}selected{% endif %}>Under Review</option>
+            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+            <option value="blocked" {% if selected_status == 'blocked' %}selected{% endif %}>Blocked</option>
+            <option value="late" {% if selected_status == 'late' %}selected{% endif %}>Late</option>
+        </select>
+    </div>
+
+    <!-- فلتر المشروع -->
+    <div class="filter-group">
+        <label class="filter-label">المشروع</label>
+        <select name="project" class="filter-select" onchange="this.form.submit()">
+            <option value="" {% if not selected_project %}selected{% endif %}>جميع المشاريع</option>
+            {% for project in projects %}
+                <option value="{{ project.id }}"
+                        {% if selected_project == project.id|stringformat:"s" %}selected{% endif %}>
+                    {{ project.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+
+
+    <!-- جدول المهام -->
+    {% if tasks %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>المهمة</th>
+                    <th>المشروع</th>
+                    <th>الحالة</th>
+                    <th>الأولوية</th>
+                    <th>وزن المهمة</th>
+                    <th>تاريخ التسليم</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td><strong>{{ task.title }}</strong></td>
+                    <td>
+                        {% if task.project %}
+                            <span class="project-name">{{ task.project.name }}</span>
+                        {% else %}
+                            <span style="color: #fbbf24;">⭐ مهمة مستقلة</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ task.status }}">
+                            {{ task.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+    {% if task.priority == 'high' %}
+        <span class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">
+            عالية ⭐
+        </span>
+    {% elif task.priority == 'medium' %}
+        <span class="status-badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">
+            متوسطة
+        </span>
+    {% elif task.priority == 'low' %}
+        <span class="status-badge" style="background: rgba(156, 163, 175, 0.2); color: #9ca3af;">
+            منخفضة
+        </span>
+    {% else %}
+        <span class="status-badge" style="background: rgba(156, 163, 175, 0.2); color: #9ca3af;">
+            غير محددة
+        </span>
+    {% endif %}
+</td>
+                <td>
+                    <div class="impact-cell">
+                        <!-- ✅ العربي فقط -->
+                        <span class="impact-label">
+                            {{ task.get_impact_display }}
+                        </span>
+                    </div>
+                </td>
+
+
+                    <td>{{ task.due_date|date:"Y-m-d"|default:"—" }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-edit" 
+        onclick="openViewTaskModal(
+            '{{ task.title|escapejs }}',
+            '{% if task.project %}{{ task.project.name|escapejs }}{% else %}⭐ مهمة مستقلة{% endif %}',
+            '{{ task.due_date|date:'Y-m-d'|default:'غير محدد' }}',
+            '{{ task.get_status_display }}',
+            '{{ task.description|escapejs|default:'لا يوجد وصف' }}',
+            '{% url "start_task" task.id %}'
+        )">
+    👁️ عرض
+</button>
+
+
+
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <p>لا توجد مهام مكلف بها حالياً</p>
+    </div>
+    {% endif %}
+</section>
+
+
+        <!-- الجدول الزمني (Gantt Chart) -->
+        <section class="section" id="timeline">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon">📊</div>
+            <span>إحصائيات مهامي</span>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <!-- Tasks by Status -->
+        <div class="chart-card">
+        <h3 class="chart-title">Tasks by Status</h3>
+        <canvas id="tasksStatusChart"></canvas>
+
+        <!-- ⬅️ هنا بيطلع الليجند بشكل مرتب -->
+        <div id="tasksStatusLegend" class="chartjs-legend"></div>
+    </div>
+
+
+        <!-- My Workload -->
+        <div class="chart-card">
+            <h3 class="chart-title">My Workload</h3>
+            <div class="workload-wrapper">
+                <canvas id="workloadChart"></canvas>
+                <div class="workload-center">
+                    <div class="workload-number">{{ workload|default:0 }}</div>
+                    <div class="workload-total">/ {{ workload_capacity|default:10 }}</div>
+                    <div class="workload-text">
+                        {% if workload <= 5 %}
+                            Workload is manageable
+                        {% elif workload <= 8 %}
+                            Workload is high
+                        {% else %}
+                            Workload is overloaded
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+        <!-- تسليم المهام -->
+
+        
+<section class="section" id="submit-task">
+    <div class="section-header">
+        <div class="section-title">
+            <div class="section-icon">📤</div>
+            <span>تسليم المهام</span>
+        </div>
+    </div>
+
+    <div class="submit-form">
+        <form method="post" action="{% url 'submit_task' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- اختيار المهمة -->
+    <div class="form-group">
+        <label class="form-label">* اختر المهمة</label>
+        <select name="task_id" class="form-input">
+    <option value="">اختر المهمة *</option>
+    {% for task in submit_tasks %}
+        <option value="{{ task.id }}">{{ task.title }}</option>
+    {% endfor %}
+</select>
+
+
+    </div>
+
+    <!-- ملاحظات التسليم -->
+    <div class="form-group">
+        <label class="form-label">ملاحظات التسليم *</label>
+        <textarea name="notes" class="form-textarea"
+                  placeholder="اكتب ملاحظاتك حول المهمة المنجزة..."></textarea>
+    </div>
+
+            <div class="form-group">
+                <label class="form-label">المرفقات</label>
+                <div class="file-upload" id="fileUploadArea">
+    <div class="file-upload-icon">📎</div>
+    <p style="color: rgba(255,255,255,0.7); margin-bottom: 5px;">
+        اسحب الملفات هنا أو اضغط للاختيار
+    </p>
+    <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">
+        (حتى 10MB) PDF, DOC, DOCX, PNG, JPG
+    </p>
+
+    <!-- اسم الملف المختار -->
+    <span class="file-name" id="fileName"
+          style="display:block; margin-top:10px; color:rgba(255,255,255,0.8); font-size:0.9rem;">
+        لم يتم اختيار ملف بعد
+    </span>
+
+    <!-- حقل الملف المخفي -->
+    <input id="attachmentInput"
+           type="file"
+           name="attachment"
+           accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+           style="display:none;">
+</div>
+
+            </div>
+
+            <button type="submit" class="btn btn-submit">
+                <span>📤</span>
+                <span>تسليم المهمة</span>
+            </button>
+        </form>
+    </div>
+</section>
+
+
+        {% endif %}
+
+<!-- Modal تعديل المشروع -->
+<div id="editProjectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>✏️ تعديل المشروع</h2>
+            <span class="modal-close" onclick="closeEditModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editProjectForm" method="post">
+                {% csrf_token %}
+                
+                <div class="modal-form-group">
+                    <label for="edit_name">اسم المشروع *</label>
+                    <input type="text" id="edit_name" name="name" class="modal-input" required>
+                </div>
+
+                <div class="modal-form-group">
+                    <label for="edit_description">الوصف</label>
+                    <textarea id="edit_description" name="description" class="modal-textarea" rows="4"></textarea>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label for="edit_start_date">تاريخ البداية</label>
+                        <input type="date" id="edit_start_date" name="start_date" class="modal-input">
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label for="edit_end_date">تاريخ النهاية</label>
+                        <input type="date" id="edit_end_date" name="end_date" class="modal-input">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="closeEditModal()">إلغاء</button>
+                    <button type="submit" class="btn-modal-save">💾 حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تأكيد حذف المشروع -->
+<div id="deleteProjectModal" class="modal">
+    <div class="modal-content delete-modal">
+        <div class="modal-header delete-header">
+            <h2>⚠️ تأكيد الحذف</h2>
+            <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">🗑️</div>
+            <h3 style="color: #2d3748; margin: 20px 0; font-size: 1.5rem;">
+                هل أنت متأكد من حذف المشروع؟
+            </h3>
+            <p style="color: #718096; font-size: 1.1rem; margin-bottom: 10px;">
+                المشروع: <strong id="delete_project_name" style="color: #ef4444;"></strong>
+            </p>
+            
+            <div class="warning-box">
+                <p>⚠️ تحذير: سيتم حذف جميع المهام المرتبطة بهذا المشروع!</p>
+                <p style="margin-top: 10px;">هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+
+            <form id="deleteProjectForm" method="post">
+                {% csrf_token %}
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="closeDeleteModal()">
+                        ↩️ إلغاء
+                    </button>
+                    <button type="submit" class="btn-modal-delete">
+                        🗑️ تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal عرض تفاصيل المهمة (للموظف) -->
+<div id="viewTaskModal" class="modal">
+    <div class="modal-content task-details-modal">
+        <div class="modal-header task-header">
+            <h2>👁️ تفاصيل المهمة</h2>
+            <span class="modal-close" onclick="closeViewTaskModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <!-- اسم المهمة -->
+            <div class="task-detail-row">
+                <div class="detail-icon">📝</div>
+                <div class="detail-content">
+                    <h4 class="detail-label">اسم المهمة</h4>
+                    <p id="view_task_title" class="detail-value"></p>
+                </div>
+            </div>
+
+            <!-- المشروع -->
+            <div class="task-detail-row">
+                <div class="detail-icon">📁</div>
+                <div class="detail-content">
+                    <h4 class="detail-label">المشروع</h4>
+                    <p id="view_task_project" class="detail-value"></p>
+                </div>
+            </div>
+
+            <!-- تاريخ التسليم -->
+            <div class="task-detail-row">
+                <div class="detail-icon">📅</div>
+                <div class="detail-content">
+                    <h4 class="detail-label">تاريخ التسليم المطلوب</h4>
+                    <p id="view_task_due_date" class="detail-value"></p>
+                </div>
+            </div>
+
+            <!-- الحالة -->
+            <div class="task-detail-row">
+                <div class="detail-icon">✅</div>
+                <div class="detail-content">
+                    <h4 class="detail-label">الحالة</h4>
+                    <p id="view_task_status" class="detail-value"></p>
+                </div>
+            </div>
+
+            <!-- الوصف -->
+            <div class="task-detail-row description-row">
+                <div class="detail-icon">📋</div>
+                <div class="detail-content">
+                    <h4 class="detail-label">الوصف</h4>
+                    <div id="view_task_description" class="detail-description"></div>
+                </div>
+            </div>
+
+            <!-- أزرار أسفل المودال -->
+<div class="modal-actions">
+    <!-- زر بدء المهمة (نخليه مخفي افتراضياً) -->
+    <button type="button"
+            id="startTaskBtn"
+            class="btn-modal-save"
+            style="display: none;">
+        🚀 بدء المهمة
+    </button>
+
+    <!-- زر فهمت (دايم ظاهر) -->
+    <button type="button"
+            class="btn-modal-cancel"
+            onclick="closeViewTaskModal()">
+        ✅ فهمت
+    </button>
+</div>
+
+
+    <!-- فورم بدء المهمة (يُعدَّل الـ action من جافاسكربت) -->
+    <form id="startTaskForm" method="post" style="flex:2; margin:0; text-align:left;">
+        {% csrf_token %}
+        <button type="submit"
+                id="startTaskBtn"
+                class="btn-modal-save"
+                style="display:none; background: linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);">
+            🚀 بدء المهمة
+        </button>
+    </form>
+</div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة مشروع جديد -->
+<div id="addProjectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>➕ إضافة مشروع جديد</h2>
+            <span class="modal-close" onclick="closeAddProjectModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'create_project' %}"> 
+                {% csrf_token %}
+                
+                <!-- اسم المشروع -->
+                <div class="modal-form-group">
+                    <label for="project_name">اسم المشروع *</label>
+                    <input type="text" id="project_name" name="name" 
+                           class="modal-input" 
+                           placeholder="مثال: تطوير تطبيق الجوال" 
+                           required>
+                </div>
+
+                <!-- وصف المشروع -->
+                <div class="modal-form-group">
+                    <label for="project_description">وصف المشروع</label>
+                    <textarea id="project_description" name="description" 
+                              class="modal-textarea" 
+                              rows="4" 
+                              placeholder="أدخل وصفاً تفصيلياً عن المشروع، أهدافه، ونطاق العمل..."></textarea>
+                    <span class="field-help">وصف مختصر يوضح تفاصيل وأهداف المشروع</span>
+                </div>
+
+                <!-- تاريخ البداية والنهاية -->
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label for="project_start_date">تاريخ البداية</label>
+                        <input type="date" id="project_start_date" name="start_date" class="modal-input">
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label for="project_end_date">تاريخ النهاية المتوقع</label>
+                        <input type="date" id="project_end_date" name="end_date" class="modal-input">
+                    </div>
+                </div>
+
+                <!-- مدير المشروع -->
+                <div class="modal-form-group">
+                    <label for="project_manager">مدير المشروع</label>
+                    <select id="project_manager" name="manager" class="modal-input">
+                        <option value="">-- اختر المدير --</option>
+                        <option value="{{ request.user.id }}" selected>
+                            {{ request.user.first_name|default:request.user.username }} (أنت)
+                        </option>
+                        <!-- يمكنك إضافة مدراء آخرين هنا لو موجودين -->
+                    </select>
+                    <span class="field-help">المدير المسؤول عن المشروع (افتراضياً: أنت)</span>
+                </div>
+
+                <!-- الأزرار -->
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="closeAddProjectModal()">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="btn-modal-save">
+                        ➕ إضافة المشروع
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة مهمة جديدة -->
+<div class="modal-overlay-task" id="addTaskModalNew">
+    <div class="modal-box-task">
+        <!-- Header -->
+        <div class="modal-header-task">
+            <h2>إنشاء مهمة جديدة</h2>
+            <button class="close-btn-task" onclick="closeTaskModal()">×</button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body-task">
+            <form method="post" action="{% url 'create_task' %}">
+                {% csrf_token %}
+                
+                <!-- العنوان -->
+                <div class="field-task">
+                    <label class="label-task">
+                        عنوان المهمة <span class="required-star">*</span>
+                    </label>
+                    <input type="text" 
+                           name="title" 
+                           class="input-task" 
+                           placeholder="أدخل عنوان المهمة" 
+                           required>
+                </div>
+
+                <!-- الوصف -->
+                <div class="field-task">
+                    <label class="label-task">الوصف</label>
+                    <textarea name="description" 
+                              class="textarea-task" 
+                              placeholder="وصف تفصيلي للمهمة..."></textarea>
+                </div>
+
+                <!-- المشروع -->
+                <div class="field-task">
+                    <label class="label-task">المشروع</label>
+                    <select name="project" class="select-task">
+                        <option value="">-- مهمة مستقلة (بدون مشروع) --</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- حاوية فيها حقلين صغيرين جنب بعض -->
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+
+    <!-- حقل أولوية المهمة -->
+    <div class="field-task" style="flex: 1;">
+        <label class="label-task">أولوية المهمة</label>
+        <select
+            name="priority"
+            id="taskPriority"
+            class="select-task"
+        >
+            <option value="high">عالية</option>
+            <option value="medium" selected>متوسطة</option>
+            <option value="low">منخفضة</option>
+        </select>
+    </div>
+
+    <!-- حقل وزن المهمة (تأثير الحمل) -->
+    <div class="field-task" style="flex: 1;">
+        <label class="label-task">وزن المهمة (تأثير الحمل)</label>
+        <select
+            name="impact"
+            id="taskImpact"
+            class="select-task"
+        >
+            <option value="normal">خفيفة (1 نقطة)</option>
+            <option value="medium" selected>متوسطة (2 نقطة)</option>
+            <option value="heavy">ثقيلة (3 نقاط)</option>
+        </select>
+    </div>
+</div>
+
+
+                <!-- الموعد النهائي -->
+                <div class="field-task">
+                    <label class="label-task">الموعد النهائي</label>
+                    <input type="date" 
+                           name="due_date" 
+                           class="input-task" 
+                           id="taskDueDate">
+                </div>
+
+                <!-- المهارات المطلوبة -->
+                <div class="field-task">
+                    <label class="skills-label-task">المهارات المطلوبة</label>
+                    <div class="skills-box-task">
+                        {% for skill in skills %}
+                            <span class="chip-task" 
+                                  data-skill-id="{{ skill.id }}" 
+                                  onclick="toggleSkill(this)">
+                                {{ skill.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    <!-- Hidden inputs -->
+                    <div id="skillsHiddenInputs"></div>
+                </div>
+
+                <!-- تعيين الموظف -->
+                <div class="field-task">
+                    <label class="label-task">تعيين الموظف</label>
+                    <div class="assign-row-task">
+                        <select name="assignee" class="select-task" id="employeeSelect">
+                            <option value="">-- لم يتم التعيين --</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.first_name|default:emp.username }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <button type="button" 
+                                class="smart-btn-task" 
+                                id="smartBtn" 
+                                onclick="toggleSmartAssign()">
+                            ⚡ إسناد ذكي
+                        </button>
+                    </div>
+
+                    <div class="suggestion-card-task" id="suggestionCard">
+                        <div id="loadingState" class="loading-task">
+                            <div class="spinner-task"></div>
+                            <p style="margin-top: 8px; font-size: 0.875rem;">جاري التحليل...</p>
+                        </div>
+
+                        <div id="resultState" style="display: none;">
+                            <span class="suggestion-badge-task">⭐ الموظف المقترح</span>
+                            
+                            <div class="employee-card-task">
+                                <div class="avatar-task" id="empAvatar">👨‍💻</div>
+                                <div class="emp-details-task">
+                                    <div class="emp-name-task" id="empName">موظف</div>
+                                    <div class="emp-role-task" id="empRole">التخصص</div>
+                                </div>
+                            
+                            </div>
+
+                            <div class="reasons-box-task">
+                                <p>أسباب الاختيار:</p>
+                                <ul id="reasonsList"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="auto_assignee" id="autoAssignee">
+                    <input type="hidden" name="assignment_type" id="assignmentType" value="manual">
+                </div>
+
+                <input type="hidden" name="status" value="todo">
+
+                <button type="submit" class="submit-btn-task">إنشاء المهمة</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modal تعديل المهمة -->
+<div id="editTaskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>✏️ تعديل المهمة</h2>
+            <span class="modal-close" onclick="closeEditTaskModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editTaskForm" method="post">
+                {% csrf_token %}
+                
+                <!-- عنوان المهمة -->
+                <div class="modal-form-group">
+                    <label for="edit_task_title">عنوان المهمة *</label>
+                    <input type="text" id="edit_task_title" name="title" class="modal-input" required>
+                </div>
+
+                <!-- وصف المهمة -->
+                <div class="modal-form-group">
+                    <label for="edit_task_description">الوصف</label>
+                    <textarea id="edit_task_description" name="description" class="modal-textarea" rows="4"></textarea>
+                </div>
+
+                <!-- المشروع -->
+                <div class="modal-form-group">
+                    <label for="edit_task_project">المشروع</label>
+                    <select id="edit_task_project" name="project" class="modal-input">
+                        <option value="">-- مهمة مستقلة (بدون مشروع) --</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- الموظف المسؤول -->
+                <div class="modal-form-group">
+                    <label for="edit_task_assignee">إسناد المهمة لـ</label>
+                    <select id="edit_task_assignee" name="assignee" class="modal-input">
+                        <option value="">-- لم يتم التعيين --</option>
+                        {% for user in employees %}
+                            <option value="{{ user.id }}">
+                                {{ user.first_name|default:user.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- الحالة وتاريخ النهاية -->
+                <div class="modal-form-row">
+                    <div class="modal-form-group">
+                        <label for="edit_task_status">الحالة</label>
+                        <select id="edit_task_status" name="status" class="modal-input">
+                            <option value="todo">⏳ To Do</option>
+                            <option value="in_progress">🔄 In Progress</option>
+                            <option value="completed">✅ Completed</option>
+                            <option value="blocked">🚫 Blocked</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label for="edit_task_due_date">تاريخ النهاية</label>
+                        <input type="date" id="edit_task_due_date" name="due_date" class="modal-input">
+                    </div>
+                </div>
+
+                <!-- الأزرار -->
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="closeEditTaskModal()">إلغاء</button>
+                    <button type="submit" class="btn-modal-save">💾 حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal حذف المهمة -->
+<div id="deleteTaskModal" class="modal">
+    <div class="modal-content delete-modal">
+        <div class="modal-header delete-header">
+            <h2>⚠️ تأكيد الحذف</h2>
+            <span class="modal-close" onclick="closeDeleteTaskModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="warning-icon">🗑️</div>
+            <h3 style="color: #2d3748; margin: 20px 0; font-size: 1.5rem;">
+                هل أنت متأكد من حذف المهمة؟
+            </h3>
+            <p style="color: #718096; font-size: 1.1rem; margin-bottom: 10px;">
+                المهمة: <strong id="delete_task_name" style="color: #ef4444;"></strong>
+            </p>
+            
+            <div class="warning-box">
+                <p>⚠️ هذا الإجراء لا يمكن التراجع عنه!</p>
+            </div>
+
+            <form id="deleteTaskForm" method="post">
+                {% csrf_token %}
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" onclick="closeDeleteTaskModal()">
+                        ↩️ إلغاء
+                    </button>
+                    <button type="submit" class="btn-modal-delete">
+                        🗑️ تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // إنشاء النجوم
+        function createStars() {
+            const container = document.getElementById('starsBackground');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(star);
+            }
+        }
+
+        window.addEventListener('load', createStars);
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Active Sidebar Link
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Tab Switching
+        function showTab(tabId) {
+            // إخفاء كل المحتويات
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // إزالة active من كل الأزرار
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // إظهار المحتوى المحدد
+            const selectedTab = document.getElementById(tabId);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // تفعيل الزر المضغوط
+            event.target.classList.add('active');
+        }
+
+    // فتح Modal التعديل
+function openEditModal(projectId, name, description, startDate, endDate) {
+    // عرض الـ Modal
+    document.getElementById('editProjectModal').style.display = 'block';
+    
+    // ملء البيانات
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_start_date').value = startDate;
+    document.getElementById('edit_end_date').value = endDate;
+    
+    // تعديل الـ action للـ form
+    const form = document.getElementById('editProjectForm');
+    form.action = `/projects/${projectId}/edit/`;
+}
+
+// إغلاق Modal
+function closeEditModal() {
+    document.getElementById('editProjectModal').style.display = 'none';
+}
+
+// إغلاق عند الضغط خارج الـ Modal
+window.onclick = function(event) {
+    const modal = document.getElementById('editProjectModal');
+    if (event.target == modal) {
+        closeEditModal();
+    }
+}
+
+// فتح Modal تأكيد الحذف
+function openDeleteModal(projectId, projectName) {
+    // عرض الـ Modal
+    document.getElementById('deleteProjectModal').style.display = 'block';
+    
+    // عرض اسم المشروع
+    document.getElementById('delete_project_name').textContent = projectName;
+    
+    // تعديل الـ action للـ form
+    const form = document.getElementById('deleteProjectForm');
+    form.action = `/projects/${projectId}/delete/`;
+}
+
+// إغلاق Modal الحذف
+function closeDeleteModal() {
+    document.getElementById('deleteProjectModal').style.display = 'none';
+}
+
+// تحديث: إغلاق عند الضغط خارج أي Modal
+window.onclick = function(event) {
+    const editModal = document.getElementById('editProjectModal');
+    const deleteModal = document.getElementById('deleteProjectModal');
+    
+    if (event.target == editModal) {
+        closeEditModal();
+    }
+    if (event.target == deleteModal) {
+        closeDeleteModal();
+    }
+}
+// 🟣 Drag & Drop لرفع الملفات + إظهار اسم الملف
+const fileUploadArea = document.getElementById('fileUploadArea');
+const fileInput = document.getElementById('attachmentInput');
+const fileNameSpan = document.getElementById('fileName');
+
+if (fileUploadArea && fileInput && fileNameSpan) {
+    // فتح اختيار الملف بالضغط
+    fileUploadArea.addEventListener('click', function () {
+        fileInput.click();
+    });
+
+    // لما يختار ملف من الـ dialog
+    fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files.length > 0) {
+            fileNameSpan.textContent = fileInput.files[0].name;
+        } else {
+            fileNameSpan.textContent = 'لم يتم اختيار ملف بعد';
+        }
+    });
+
+    // منع السلوك الافتراضي للـ drag
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    // لما يدخل ملف فوق المنطقة
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, function () {
+            fileUploadArea.classList.add('drag-over');
+        });
+    });
+
+    // لما يطلع أو ينزل الملف
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, function () {
+            fileUploadArea.classList.remove('drag-over');
+        });
+    });
+
+    // عند الإفلات
+    fileUploadArea.addEventListener('drop', function (e) {
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            fileInput.files = files;
+            fileNameSpan.textContent = files[0].name;
+        }
+    });
+}
+
+// فتح Modal عرض تفاصيل المهمة
+function openViewTaskModal(title, project, dueDate, status, description, startUrl) {
+    // عرض الـ Modal
+    document.getElementById('viewTaskModal').style.display = 'block';
+    
+    // ملء البيانات
+    document.getElementById('view_task_title').textContent = title;
+    document.getElementById('view_task_project').textContent = project;
+    document.getElementById('view_task_due_date').textContent = dueDate;
+    document.getElementById('view_task_status').innerHTML = getStatusBadge(status);
+    document.getElementById('view_task_description').textContent = description;
+
+    // 🔹 زر "بدء المهمة"
+    const startBtn = document.getElementById('startTaskBtn');
+
+    if (startBtn) {
+        if (status === 'To Do') {
+            // أظهر الزر وخلِّ الضغط يروح لرابط بدء المهمة
+            startBtn.style.display = 'inline-flex';
+            startBtn.onclick = function() {
+                window.location.href = startUrl;   // يروح للـ view اللي كتبناه
+            };
+        } else {
+            // أي حالة ثانية → خبّي الزر وامسح الـ onclick
+            startBtn.style.display = 'none';
+            startBtn.onclick = null;
+        }
+    }
+}
+
+
+
+// إغلاق Modal عرض المهمة
+function closeViewTaskModal() {
+    document.getElementById('viewTaskModal').style.display = 'none';
+}
+
+// Helper function لإنشاء badge الحالة
+function getStatusBadge(status) {
+    const badges = {
+        'To Do': '<span style="background: rgba(156, 163, 175, 0.2); color: #9ca3af; padding: 6px 15px; border-radius: 20px; font-weight: 600;">⏳ قيد الانتظار</span>',
+        'In Progress': '<span style="background: rgba(59, 130, 246, 0.2); color: #3b82f6; padding: 6px 15px; border-radius: 20px; font-weight: 600;">🔄 قيد التنفيذ</span>',
+        'Completed': '<span style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 6px 15px; border-radius: 20px; font-weight: 600;">✅ مكتملة</span>',
+        'Blocked': '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 6px 15px; border-radius: 20px; font-weight: 600;">🚫 معلقة</span>'
+    };
+    return badges[status] || status;
+}
+
+// تحديث: إغلاق عند الضغط خارج أي Modal
+window.onclick = function(event) {
+    const editModal = document.getElementById('editProjectModal');
+    const deleteModal = document.getElementById('deleteProjectModal');
+    const viewTaskModal = document.getElementById('viewTaskModal');
+    
+    if (event.target == editModal) {
+        closeEditModal();
+    }
+    if (event.target == deleteModal) {
+        closeDeleteModal();
+    }
+    if (event.target == viewTaskModal) {
+        closeViewTaskModal();
+    }
+}
+// فتح Modal إضافة مشروع
+function openAddProjectModal() {
+    document.getElementById('addProjectModal').style.display = 'block';
+    
+    // تعيين تاريخ اليوم كحد أدنى
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('project_start_date').min = today;
+    document.getElementById('project_end_date').min = today;
+}
+
+// إغلاق Modal إضافة مشروع
+function closeAddProjectModal() {
+    document.getElementById('addProjectModal').style.display = 'none';
+    // مسح الحقول
+    document.getElementById('project_name').value = '';
+    document.getElementById('project_description').value = '';
+    document.getElementById('project_start_date').value = '';
+    document.getElementById('project_end_date').value = '';
+}
+
+// Validation: تاريخ النهاية لازم يكون بعد تاريخ البداية
+document.getElementById('project_start_date')?.addEventListener('change', function() {
+    const endDateInput = document.getElementById('project_end_date');
+    endDateInput.min = this.value;
+});
+
+// تحديث: إغلاق عند الضغط خارج أي Modal
+window.onclick = function(event) {
+    const editModal = document.getElementById('editProjectModal');
+    const deleteModal = document.getElementById('deleteProjectModal');
+    const viewTaskModal = document.getElementById('viewTaskModal');
+    const addProjectModal = document.getElementById('addProjectModal');
+    
+    if (event.target == editModal) {
+        closeEditModal();
+    }
+    if (event.target == deleteModal) {
+        closeDeleteModal();
+    }
+    if (event.target == viewTaskModal) {
+        closeViewTaskModal();
+    }
+    if (event.target == addProjectModal) {
+        closeAddProjectModal();
+    }
+}
+// فتح Modal إضافة مهمة
+// فتح Modal
+function openTaskModal() {
+    document.getElementById('addTaskModalNew').classList.add('show');
+    
+    // تعيين تاريخ اليوم كحد أدنى
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.getElementById('taskDueDate');
+    if (dateInput) {
+        dateInput.min = today;
+    }
+}
+
+// إغلاق Modal
+function closeTaskModal() {
+    const modal = document.getElementById('addTaskModalNew');
+    modal.classList.remove('show');
+    
+    // إعادة تعيين النموذج
+    const form = modal.querySelector('form');
+    if (form) form.reset();
+    
+    // إعادة تعيين المهارات
+    document.querySelectorAll('.chip-task.active').forEach(chip => {
+        chip.classList.remove('active');
+    });
+    
+    // مسح hidden inputs
+    document.getElementById('skillsHiddenInputs').innerHTML = '';
+    
+    // إخفاء الإسناد الذكي
+    document.getElementById('suggestionCard').classList.remove('show');
+    document.getElementById('smartBtn').classList.remove('active');
+    document.getElementById('employeeSelect').disabled = false;
+    isSmartActive = false;
+}
+
+// اختيار/إلغاء اختيار مهارة
+function toggleSkill(element) {
+    element.classList.toggle('active');
+    updateSkillsInputs();
+}
+
+// تحديث hidden inputs للمهارات
+function updateSkillsInputs() {
+    const container = document.getElementById('skillsHiddenInputs');
+    container.innerHTML = '';
+    
+    const selected = document.querySelectorAll('.chip-task.active');
+    selected.forEach(chip => {
+        const skillId = chip.getAttribute('data-skill-id');
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'required_skills';
+        input.value = skillId;
+        container.appendChild(input);
+    });
+}
+
+// متغير حالة الإسناد الذكي
+const SMART_ASSIGN_URL = "{% url 'smart_assign_api' %}";
+// متغير حالة الإسناد الذكي (بس عشان نعرف هل الكرت ظاهر ولا لا)
+let isSmartActive = false;
+
+async function toggleSmartAssign() {
+    const btn       = document.getElementById('smartBtn');
+    const card      = document.getElementById('suggestionCard');
+    const select    = document.getElementById('employeeSelect');
+    const loading   = document.getElementById('loadingState');
+    const result    = document.getElementById('resultState');
+    const typeInput = document.getElementById('assignmentType');
+    const autoInput = document.getElementById('autoAssignee');
+
+    // لو الكرت ظاهر و ضغطنا مرة ثانية → نخفيه ونرجع للوضع العادي
+    if (isSmartActive) {
+        isSmartActive = false;
+        btn.classList.remove('active');
+        card.classList.remove('show');
+        typeInput.value = 'manual';
+        autoInput.value = '';
+        // نترك الـ select زي ما هو (عشان لو المدير عدّل يده)
+        return;
+    }
+
+    // ---- 1) قراءة بيانات الفورم ----
+    const titleInput       = document.querySelector('input[name="title"]');
+    const descInput        = document.querySelector('textarea[name="description"]');
+    const dueDateInput     = document.querySelector('input[name="due_date"]');
+    const selectedSkillEls = document.querySelectorAll('.chip-task.active');
+
+    const title       = titleInput ? titleInput.value.trim() : '';
+    const description = descInput ? descInput.value.trim() : '';
+    const dueDate     = dueDateInput && dueDateInput.value ? dueDateInput.value : null;
+    const priority = document.getElementById('taskPriority').value; 
+    const impact   = document.getElementById('taskImpact').value;   
+
+    if (!title && !description) {
+        alert('⚠️ يرجى إدخال عنوان أو وصف للمهمة أولاً');
+        return;
+    }
+
+    if (selectedSkillEls.length === 0) {
+        alert('⚠️ يرجى تحديد المهارات المطلوبة أولاً');
+        return;
+    }
+
+    const requiredSkillIds = Array.from(selectedSkillEls).map(el =>
+        parseInt(el.getAttribute('data-skill-id'))
+    );
+
+    // ---- 2) تجهيز واجهة التحميل ----
+    isSmartActive = true;
+    btn.classList.add('active');
+    card.classList.add('show');
+    loading.style.display = 'block';
+    result.style.display  = 'none';
+    typeInput.value = 'auto';
+    autoInput.value = '';
+
+    // ---- 3) تجهيز الـ payload وإرسال الطلب للـ API ----
+    const payload = {
+        title: title,
+        description: description,
+        due_date: dueDate,            
+        required_skills: requiredSkillIds,
+        priority: priority,          
+        impact: impact 
+
+    };
+
+    try {
+        const response = await fetch(SMART_ASSIGN_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // csrf غير ضروري حالياً لأن view عليها csrf_exempt
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+            console.error('Smart assign error:', data);
+            alert(data.error || 'حدث خطأ أثناء الإسناد الذكي');
+            // رجوع للحالة القديمة
+            isSmartActive = false;
+            btn.classList.remove('active');
+            card.classList.remove('show');
+            typeInput.value = 'manual';
+            return;
+        }
+
+        const suggested = data.suggested_user;
+        const reason    = data.reason || '';
+        const scores    = data.scores || [];
+
+        if (!suggested) {
+            alert('لم يتم العثور على موظف مناسب لهذه المهمة');
+            isSmartActive = false;
+            btn.classList.remove('active');
+            card.classList.remove('show');
+            typeInput.value = 'manual';
+            return;
+        }
+
+        // ---- 4) تحديث واجهة النتيجة ----
+        loading.style.display = 'none';
+        result.style.display  = 'block';
+
+        // اسم الموظف + التخصص
+        document.getElementById('empName').textContent = suggested.name || 'موظف';
+        document.getElementById('empRole').textContent = suggested.job_role || '—';
+
+        // نسبة التطابق من scores
+        let scoreForUser = scores.find(s => s.user_id === suggested.id);
+        let percent = 0;
+        if (scoreForUser && typeof scoreForUser.score === 'number') {
+            percent = Math.round(scoreForUser.score * 100);
+        }
+        
+
+        const reasonsList = document.getElementById('reasonsList');
+        reasonsList.innerHTML = '';
+
+        let text = (reason || '').trim();
+
+        // نقسم على سطر جديد أو شرطة أو نقطة
+        let parts = text.split(/[\n\-•]+/).map(p => p.trim()).filter(p => p.length > 0);
+
+        // لو ما رجع شيء سليم، نحط سبب افتراضي
+        if (parts.length === 0) {
+            parts = ['تم اختيار هذا الموظف بناءً على توافق المهارات وعبء العمل والتقييم العام.'];
+        }
+
+        parts.forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = p;
+            reasonsList.appendChild(li);
+        });
+
+
+        // نخلي الاقتراح فعلي: نختار الموظف المقترح في الـ select
+        select.disabled = false;     // نخليه متاح عشان المدير يقدر يغيّر لو حاب
+        select.value    = String(suggested.id);
+
+        // نخزن الـ id في الحقل المخفي (لو حاب تستخدمه في الـ View)
+        autoInput.value = suggested.id;
+
+    } catch (err) {
+        console.error(err);
+        alert('خطأ في الاتصال بخدمة الإسناد الذكي');
+        isSmartActive = false;
+        btn.classList.remove('active');
+        card.classList.remove('show');
+        typeInput.value = 'manual';
+        autoInput.value = '';
+    }
+}
+
+
+// إغلاق عند الضغط خارج Modal
+document.getElementById('addTaskModalNew')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeTaskModal();
+    }
+});
+// ========== تعديل المهمة ==========
+
+// فتح Modal تعديل المهمة
+function openEditTaskModal(taskId, title, description, projectId, assigneeId, status, dueDate) {
+    // عرض الـ Modal
+    document.getElementById('editTaskModal').style.display = 'block';
+    
+    // ملء البيانات
+    document.getElementById('edit_task_title').value = title;
+    document.getElementById('edit_task_description').value = description;
+    document.getElementById('edit_task_project').value = projectId || '';
+    document.getElementById('edit_task_assignee').value = assigneeId || '';
+    document.getElementById('edit_task_status').value = status;
+    document.getElementById('edit_task_due_date').value = dueDate;
+    
+    // تعديل الـ action للـ form
+    const form = document.getElementById('editTaskForm');
+    form.action = `/tasks/${taskId}/edit/`;
+}
+
+// إغلاق Modal تعديل المهمة
+function closeEditTaskModal() {
+    document.getElementById('editTaskModal').style.display = 'none';
+}
+
+// ========== حذف المهمة ==========
+
+// فتح Modal حذف المهمة
+function openDeleteTaskModal(taskId, taskTitle) {
+    // عرض الـ Modal
+    document.getElementById('deleteTaskModal').style.display = 'block';
+    
+    // عرض اسم المهمة
+    document.getElementById('delete_task_name').textContent = taskTitle;
+    
+    // تعديل الـ action للـ form
+    const form = document.getElementById('deleteTaskForm');
+    form.action = `/tasks/${taskId}/delete/`;
+}
+
+// إغلاق Modal حذف المهمة
+function closeDeleteTaskModal() {
+    document.getElementById('deleteTaskModal').style.display = 'none';
+}
+
+// ========== تحديث: إغلاق عند الضغط خارج أي Modal ==========
+window.onclick = function(event) {
+    const editProjectModal = document.getElementById('editProjectModal');
+    const deleteProjectModal = document.getElementById('deleteProjectModal');
+    const viewTaskModal = document.getElementById('viewTaskModal');
+    const addProjectModal = document.getElementById('addProjectModal');
+    const addTaskModal = document.getElementById('addTaskModal');
+    const editTaskModal = document.getElementById('editTaskModal');
+    const deleteTaskModal = document.getElementById('deleteTaskModal');
+    
+    if (event.target == editProjectModal) {
+        closeEditModal();
+    }
+    if (event.target == deleteProjectModal) {
+        closeDeleteModal();
+    }
+    if (event.target == viewTaskModal) {
+        closeViewTaskModal();
+    }
+    if (event.target == addProjectModal) {
+        closeAddProjectModal();
+    }
+    if (event.target == addTaskModal) {
+        closeAddTaskModal();
+    }
+    if (event.target == editTaskModal) {
+        closeEditTaskModal();
+    }
+    if (event.target == deleteTaskModal) {
+        closeDeleteTaskModal();
+    }
+}
+
+
+// ================== Employee Charts ==================
+{% if role != "manager" %}
+
+const tasksStatusCanvas = document.getElementById('tasksStatusChart');
+if (tasksStatusCanvas) {
+    const tasksStatusChart = new Chart(tasksStatusCanvas, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                'To Do ({{ todo_tasks }})',
+                'In Progress ({{ in_progress_tasks }})',
+                'Under Review ({{ under_review_tasks }})', 
+                'Blocked ({{ blocked_tasks }})',
+                'Completed ({{ completed_tasks }})',
+                'Late ({{ overdue_tasks }})'
+            ],
+            datasets: [{
+                data: [
+                    {{ todo_tasks }},
+                    {{ in_progress_tasks }},
+                    {{ under_review_tasks }},
+                    {{ blocked_tasks }},
+                    {{ completed_tasks }},
+                    {{ overdue_tasks }}
+                ],
+                backgroundColor: [
+                    '#6b7280',  // To Do
+                    '#3b82f6',  // In Progress
+                    '#eab308',  // Under Review
+                    '#f59e0b',  // Blocked
+                    '#22c55e',  // Completed
+                    '#ef4444'   // Late
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 14,
+                        boxHeight: 14,
+                        padding: 12,
+                        usePointStyle: false,
+                        pointStyle: 'circle',
+                        color: '#ffffff',
+                        font: {
+                            family: 'Cairo',
+                            size: 13,
+                            weight: '600'
+                        }
+                    }
+                }
+            },
+                cutout: '60%'
+        }
+    });
+}
+
+
+const workloadCanvas = document.getElementById('workloadChart');
+if (workloadCanvas) {
+    const activeTasks = {{ workload |default:0 }};
+    const capacity = {{ workload_capacity |default:10 }};
+    const free = Math.max(capacity - activeTasks, 0);
+
+    const workloadChart = new Chart(workloadCanvas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Used', 'Free'],
+            datasets: [{
+                data: [activeTasks, free],
+                backgroundColor: ['#22c55e', 'rgba(255,255,255,0.08)'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: false }
+            },
+            cutout: '75%'
+        }
+    });
+}
+
+{% endif %}
+
+
+
+    </script>
+
+
+{% endblock %}
